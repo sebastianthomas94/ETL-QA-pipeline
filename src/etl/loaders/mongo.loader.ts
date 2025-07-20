@@ -3,7 +3,7 @@ import { Collection, AnyBulkWriteOperation } from "mongodb";
 
 export class MongoLoader extends Transform {
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private buffer: Map<string, AnyBulkWriteOperation<any>> = new Map(); // Changed to Map
+    private buffer: AnyBulkWriteOperation<any>[] = [];
 
     constructor(
         private readonly coll: Collection,
@@ -20,25 +20,20 @@ export class MongoLoader extends Transform {
             filter[field] = doc[field];
         }
 
-        // Create a key to track duplicates within the batch
-        const key = this.uniqueFields.map((field) => `${field}:${doc[field]}`).join("|");
-
-        // Store/overwrite with latest document (last wins)
-        this.buffer.set(key, {
+        this.buffer.push({
             updateOne: { filter, update: { $set: doc }, upsert: true },
         });
 
-        if (this.buffer.size >= this.batchSize) {
-            await this.coll.bulkWrite(Array.from(this.buffer.values()));
-            this.buffer.clear();
+        if (this.buffer.length >= this.batchSize) {
+            await this.coll.bulkWrite(this.buffer);
+            this.buffer = [];
         }
         done();
     }
 
     async _flush(done: TransformCallback) {
-        if (this.buffer.size > 0) {
-            await this.coll.bulkWrite(Array.from(this.buffer.values()));
-            this.buffer.clear();
+        if (this.buffer.length) {
+            await this.coll.bulkWrite(this.buffer);
         }
         done();
     }
