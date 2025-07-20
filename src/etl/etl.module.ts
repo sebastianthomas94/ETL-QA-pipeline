@@ -4,8 +4,11 @@ import { MongoExtractor } from "./extractors/mongo.extractor";
 import { PgExtractor } from "./extractors/pg.extractor";
 import { LastRunStore } from "../common/last-run.store";
 import { EnvironmentService } from "@common/global/environment.service";
+import { EtlCron } from "src/jobs/etl.cron";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
+    imports: [ScheduleModule.forRoot()],
     controllers: [],
     providers: [
         EtlService,
@@ -23,6 +26,7 @@ import { EnvironmentService } from "@common/global/environment.service";
             },
             inject: [EnvironmentService],
         },
+        EtlCron,
         LastRunStore,
     ],
     exports: [EtlService],
