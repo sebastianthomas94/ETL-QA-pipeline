@@ -81,10 +81,8 @@ export class EtlService implements OnApplicationBootstrap {
             }
 
             const indexes = await client.db().collection(collName).indexes();
-            console.log(`Indexes for collection '${collName}':`, indexes);
             const uniqueIndex = indexes.find((idx) => idx.unique && idx.name !== "_id_");
-            const uniqueIndexKeys = uniqueIndex ? [...Object.keys(uniqueIndex.key), "_id"] : ["_id"];
-            console.log(`Unique index keys for collection '${collName}':`, uniqueIndexKeys);
+            const uniqueIndexKeys = uniqueIndex ? Object.keys(uniqueIndex.key) : ["_id"];
 
             const loader = new MongoLoader(client.db().collection(collName), 500, uniqueIndexKeys);
             const cursor = await this.mongoExt.streamCollection(collName, since);
