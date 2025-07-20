@@ -18,7 +18,8 @@ export class MongoLoader extends Transform {
             updateOne: { filter: { _id: doc._id }, update: { $set: doc }, upsert: true },
         });
         if (this.buffer.length >= this.batchSize) {
-            await this.coll.bulkWrite(this.buffer);
+            await this.executeBulkWrite(this.buffer);
+
             this.buffer = [];
         }
         done();
@@ -26,8 +27,17 @@ export class MongoLoader extends Transform {
 
     async _flush(done: TransformCallback) {
         if (this.buffer.length) {
-            await this.coll.bulkWrite(this.buffer);
+            await this.executeBulkWrite(this.buffer);
         }
         done();
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private async executeBulkWrite(buffer: AnyBulkWriteOperation<any>[]) {
+        try {
+            await this.coll.bulkWrite(buffer);
+        } catch (error) {
+            console.error("Error executing bulk write:", error);
+        }
     }
 }
