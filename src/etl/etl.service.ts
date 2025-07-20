@@ -72,19 +72,7 @@ export class EtlService implements OnApplicationBootstrap {
         let client: MongoClient | null = null;
         try {
             client = await MongoClient.connect(this.environmentService.qaMongo.uri);
-
-            // Ensure collection exists
-            const collections = await client.db().listCollections({ name: collName }).toArray();
-            if (collections.length === 0) {
-                this.logger.log(`Creating collection '${collName}' in QA database`);
-                await client.db().createCollection(collName);
-            }
-
-            const indexes = await client.db().collection(collName).indexes();
-            const uniqueIndex = indexes.find((idx) => idx.unique && idx.name !== "_id_");
-            const uniqueIndexKeys = uniqueIndex ? Object.keys(uniqueIndex.key) : ["_id"];
-
-            const loader = new MongoLoader(client.db().collection(collName), 500, uniqueIndexKeys);
+            const loader = new MongoLoader(client.db().collection(collName));
             const cursor = await this.mongoExt.streamCollection(collName, since);
 
             // Convert cursor to stream
