@@ -1,5 +1,5 @@
 import { Transform, TransformCallback } from "stream";
-import { faker } from "@faker-js/faker";
+import { fakerEN_IN } from "@faker-js/faker";
 
 export class MaskTransform extends Transform {
     constructor() {
@@ -17,22 +17,22 @@ export class MaskTransform extends Transform {
 
         // Mask sensitive data fields
         if (obj.email) {
-            obj.email = faker.internet.email();
+            obj.email = fakerEN_IN.internet.email();
         }
         if (obj.name) {
-            obj.name = faker.person.fullName();
+            obj.name = fakerEN_IN.person.fullName();
         }
         if (obj.firstName) {
-            obj.firstName = faker.person.firstName();
+            obj.firstName = fakerEN_IN.person.firstName();
         }
         if (obj.lastName) {
-            obj.lastName = faker.person.lastName();
+            obj.lastName = fakerEN_IN.person.lastName();
         }
         if (obj.phone) {
-            obj.phone = faker.phone.number();
+            obj.phone = fakerEN_IN.phone.number({ style: "international" });
         }
         if (obj.address) {
-            obj.address = faker.location.streetAddress();
+            obj.address = fakerEN_IN.location.streetAddress();
         }
 
         this.push(obj);
