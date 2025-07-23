@@ -8,6 +8,13 @@ export class MaskTransform extends Transform {
 
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     _transform(obj: any, _: BufferEncoding, done: TransformCallback) {
+        if (!this.shouldTransform(obj)) {
+            this.push(obj);
+            console.warn(`Skipping transformation for object: ${JSON.stringify(obj)}`);
+            done();
+            return;
+        }
+
         // Mask sensitive data fields
         if (obj.email) {
             obj.email = faker.internet.email();
@@ -30,5 +37,15 @@ export class MaskTransform extends Transform {
 
         this.push(obj);
         done();
+    }
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private shouldTransform(obj: any): boolean {
+        const shouldTransform = this.isEducator(obj);
+        return shouldTransform;
+    }
+
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    isEducator(obj: any): boolean {
+        return obj?.accountType === "User";
     }
 }

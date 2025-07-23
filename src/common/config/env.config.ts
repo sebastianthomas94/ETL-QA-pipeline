@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Matches, Max, Min, validateSync } from "class-validator";
+import { IsArray, IsEnum, IsNumber, IsOptional, IsString, Matches, Max, Min, validateSync } from "class-validator";
 import { plainToClass, Transform } from "class-transformer";
 import { MONGO_PATTERN } from "../constant/common.constant";
 import { parseCSVString } from "@common/utils/parse-csv-string.util";
@@ -71,6 +71,16 @@ export class EnvironmentVariables {
 
     @IsString()
     QA_PG_PASS: string;
+
+    @IsArray()
+    @IsOptional()
+    @Transform(({ value }) => (value ? parseCSVString(value) : []))
+    TRANSFORMER_TABLE_NAMES: string[];
+
+    @IsArray()
+    @IsOptional()
+    @Transform(({ value }) => (value ? parseCSVString(value) : []))
+    TRANSFORMER_COLLECTION_NAMES: string[];
 }
 
 export function validate(config: Record<string, unknown>) {

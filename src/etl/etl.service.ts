@@ -22,6 +22,9 @@ export class EtlService implements OnApplicationBootstrap {
         private readonly environmentService: EnvironmentService,
     ) {}
 
+    private readonly transformCollectionNames = this.environmentService.mongoCollectionNames.transformerCollectionNames;
+    private readonly transformTableNames = this.environmentService.pgTableNames.transformerTableNames;
+
     async onApplicationBootstrap() {
         this.logger.log("Starting ETL pipeline...");
         await this.run();
@@ -30,8 +33,8 @@ export class EtlService implements OnApplicationBootstrap {
     async run() {
         const now = new Date();
 
-        const mongoCollectionNames = this.environmentService.mongoCollectionNames;
-        const pgTableNames = this.environmentService.pgTableNames;
+        const mongoCollectionNames = this.environmentService.mongoCollectionNames.collectionNames;
+        const pgTableNames = this.environmentService.pgTableNames.tableNames;
 
         try {
             if (mongoCollectionNames.length === 0) {
@@ -77,7 +80,12 @@ export class EtlService implements OnApplicationBootstrap {
 
             // Convert cursor to stream
             const cursorStream = cursor.stream();
-            await pipeline(cursorStream, new MaskTransform(), loader);
+            if (this.transformCollectionNames.includes(collName)) {
+                this.logger.log(`Applying masking transform for collection '${collName}'`);
+                await pipeline(cursorStream, new MaskTransform(), loader);
+            } else {
+                await pipeline(cursorStream, loader);
+            }
             this.logger.log(`MongoDB collection '${collName}' sync completed`);
         } finally {
             if (client) {
@@ -102,8 +110,12 @@ export class EtlService implements OnApplicationBootstrap {
 
             const stream = await this.pgExt.streamTable(table, since);
             const loader = new PgLoader(qaClient, table);
-
-            await pipeline(stream, new MaskTransform(), loader);
+            if (this.transformTableNames.includes(table)) {
+                this.logger.log(`Applying masking transform for table '${table}'`);
+                await pipeline(stream, new MaskTransform(), loader);
+            } else {
+                await pipeline(stream, loader);
+            }
             this.logger.log(`PostgreSQL table '${table}' sync completed`);
         } finally {
             if (prodClient) {

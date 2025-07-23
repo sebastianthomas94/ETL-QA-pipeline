@@ -20,12 +20,24 @@ export class EnvironmentService {
         };
     }
 
-    get mongoCollectionNames(): string[] {
-        return this.configService.get("MONGO_COLLECTION_NAMES", { infer: true }) || [];
+    get mongoCollectionNames(): {
+        collectionNames: string[];
+        transformerCollectionNames: string[];
+    } {
+        return {
+            collectionNames: this.configService.get("MONGO_COLLECTION_NAMES", { infer: true }) || [],
+            transformerCollectionNames: this.configService.get("TRANSFORMER_COLLECTION_NAMES", { infer: true }) || [],
+        };
     }
 
-    get pgTableNames(): string[] {
-        return this.configService.get("PG_TABLE_NAMES", { infer: true }) || [];
+    get pgTableNames(): {
+        tableNames: string[];
+        transformerTableNames: string[];
+    } {
+        return {
+            tableNames: this.configService.get("PG_TABLE_NAMES", { infer: true }) || [],
+            transformerTableNames: this.configService.get("TRANSFORMER_TABLE_NAMES", { infer: true }) || [],
+        };
     }
 
     get productionMongo(): IMongoConfig {
