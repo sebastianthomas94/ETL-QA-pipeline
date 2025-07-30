@@ -81,6 +81,22 @@ export class EnvironmentVariables {
     @IsOptional()
     @Transform(({ value }) => (value ? parseCSVString(value) : []))
     TRANSFORMER_COLLECTION_NAMES: string[];
+
+    // R2 Configuration
+    @IsString()
+    R2_ACCESS_KEY_ID: string;
+
+    @IsString()
+    R2_SECRET_ACCESS_KEY: string;
+
+    @IsString()
+    R2_ENDPOINT: string;
+
+    @IsString()
+    R2_PROD_BUCKET: string;
+
+    @IsString()
+    R2_QA_BUCKET: string;
 }
 
 export function validate(config: Record<string, unknown>) {

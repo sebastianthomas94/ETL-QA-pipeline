@@ -8,6 +8,6 @@ export class EtlCron {
 
     @Cron(CronExpression.EVERY_DAY_AT_2AM)
     async handleCron() {
-        await this.etlService.run();
+        await this.etlService.runFullETL();
     }
 }

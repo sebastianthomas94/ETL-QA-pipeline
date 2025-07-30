@@ -1,3 +1,4 @@
+import { R2CopyService } from "./copy/r2-copy.service";
 import { Module } from "@nestjs/common";
 import { EtlService } from "./etl.service";
 import { MongoExtractor } from "./extractors/mongo.extractor";
@@ -28,6 +29,7 @@ import { ScheduleModule } from "@nestjs/schedule";
         },
         EtlCron,
         LastRunStore,
+        R2CopyService,
     ],
     exports: [EtlService],
 })

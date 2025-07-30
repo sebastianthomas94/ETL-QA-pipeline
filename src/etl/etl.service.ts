@@ -9,6 +9,7 @@ import { LastRunStore } from "../common/last-run.store";
 import { MongoClient } from "mongodb";
 import { Client as PgClient } from "pg";
 import { EnvironmentService } from "@common/global/environment.service";
+import { R2CopyService } from "./copy/r2-copy.service";
 import { getAllMongoCollectionNames, getAllTableNames } from "@common/utils/db.util";
 
 @Injectable()
@@ -20,17 +21,25 @@ export class EtlService implements OnApplicationBootstrap {
         private readonly mongoExt: MongoExtractor,
         private readonly pgExt: PgExtractor,
         private readonly environmentService: EnvironmentService,
+        private readonly r2CopyService: R2CopyService,
     ) {}
+    /**
+     * Run the full ETL pipeline, including copying R2 assets from prod to qa.
+     */
+    async runFullETL() {
+        await this.run();
+        await this.r2CopyService.copyAllAssets();
+    }
 
     private readonly transformCollectionNames = this.environmentService.mongoCollectionNames.transformerCollectionNames;
     private readonly transformTableNames = this.environmentService.pgTableNames.transformerTableNames;
 
     async onApplicationBootstrap() {
         this.logger.log("Starting ETL pipeline...");
-        await this.run();
+        await this.runFullETL();
     }
 
-    async run() {
+    private async run() {
         const now = new Date();
 
         const mongoCollectionNames = this.environmentService.mongoCollectionNames.collectionNames;
