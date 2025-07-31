@@ -41,7 +41,7 @@ export class R2CopyService {
                     destinationBucket: this.destinationBucket,
                     key: Key,
                 });
-                this.logger.debug(`Copied ${key.Key} from ${this.sourceBucket} to ${this.destinationBucket}`);
+                this.logger.log(`Copied ${Key} from ${this.sourceBucket} to ${this.destinationBucket}`);
             }
         } catch (error) {
             this.logger.error(`Error copying assets: ${error.message}`);
