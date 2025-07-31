@@ -1,4 +1,10 @@
-import AWS from "aws-sdk";
+import {
+    S3,
+    CopyObjectCommand,
+    ListObjectsV2Command,
+    ListObjectsV2CommandOutput,
+    CopyObjectCommandOutput,
+} from "@aws-sdk/client-s3";
 
 export const createR2Client = ({
     accessKeyId,
@@ -9,28 +15,30 @@ export const createR2Client = ({
     secretAccessKey: string;
     endpoint: string;
 }) =>
-    new AWS.S3({
-        accessKeyId,
-        secretAccessKey,
-        endpoint, // e.g. https://<account-id>.r2.cloudflarestorage.com
+    new S3({
+        credentials: {
+            accessKeyId,
+            secretAccessKey,
+        },
+        endpoint,
         region: "auto",
-        signatureVersion: "v4",
+        forcePathStyle: true,
     });
 
-export const listAllObjects = async (s3: AWS.S3, bucket: string): Promise<string[]> => {
+export const listAllObjects = async (s3: S3, bucket: string): Promise<string[]> => {
     let isTruncated = true;
     let continuationToken: string | undefined = undefined;
     const keys: string[] = [];
 
     while (isTruncated) {
-        const response: AWS.S3.ListObjectsV2Output = await s3
-            .listObjectsV2({
+        const response: ListObjectsV2CommandOutput = await s3.send(
+            new ListObjectsV2Command({
                 Bucket: bucket,
                 ContinuationToken: continuationToken,
-            })
-            .promise();
+            }),
+        );
 
-        response.Contents?.forEach((obj) => {
+        (response.Contents ?? []).forEach((obj: { Key?: string }) => {
             if (obj.Key) keys.push(obj.Key);
         });
         isTruncated = !!response.IsTruncated;
@@ -40,18 +48,47 @@ export const listAllObjects = async (s3: AWS.S3, bucket: string): Promise<string
     return keys;
 };
 
+export const listAllObjectsWithMetadata = async (
+    s3: S3,
+    bucket: string,
+): Promise<{ Key: string; LastModified: Date }[]> => {
+    let isTruncated = true;
+    let continuationToken: string | undefined = undefined;
+    const objects: { Key: string; LastModified: Date }[] = [];
+
+    while (isTruncated) {
+        const response: ListObjectsV2CommandOutput = await s3.send(
+            new ListObjectsV2Command({
+                Bucket: bucket,
+                ContinuationToken: continuationToken,
+            }),
+        );
+
+        (response.Contents ?? []).forEach((obj) => {
+            if (obj.Key && obj.LastModified) {
+                objects.push({ Key: obj.Key, LastModified: obj.LastModified });
+            }
+        });
+
+        isTruncated = !!response.IsTruncated;
+        continuationToken = response.NextContinuationToken;
+    }
+
+    return objects;
+};
+
 export function copyObject(options: {
-    s3: AWS.S3;
+    s3: S3;
     sourceBucket: string;
     destinationBucket: string;
     key: string;
-}): Promise<AWS.S3.CopyObjectOutput> {
+}): Promise<CopyObjectCommandOutput> {
     const { s3, sourceBucket, destinationBucket, key } = options;
-    return s3
-        .copyObject({
+    return s3.send(
+        new CopyObjectCommand({
             Bucket: destinationBucket,
             CopySource: `/${sourceBucket}/${encodeURIComponent(key)}`,
             Key: key,
-        })
-        .promise();
+        }),
+    );
 }
