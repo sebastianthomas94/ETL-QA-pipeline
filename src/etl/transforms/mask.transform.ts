@@ -19,7 +19,7 @@ export class MaskTransform extends Transform {
         if (obj.email) {
             obj.email = fakerEN_IN.internet.email();
         }
-        if (obj.name) {
+        if (obj.name && obj.name !== "Guest") {
             obj.name = fakerEN_IN.person.fullName();
         }
         if (obj.firstName) {
