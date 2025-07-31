@@ -41,7 +41,6 @@ export class R2CopyService {
                     destinationBucket: this.destinationBucket,
                     key: Key,
                 });
-                console.log(JSON.stringify(key, null, 2));
                 this.logger.debug(`Copied ${key.Key} from ${this.sourceBucket} to ${this.destinationBucket}`);
             }
         } catch (error) {
