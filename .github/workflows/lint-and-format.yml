@@ -35,8 +35,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Format code
-              if: ${{ failure() }}
+            - name: Format and lint code
               run: |
                   pnpm format
                   pnpm lint
