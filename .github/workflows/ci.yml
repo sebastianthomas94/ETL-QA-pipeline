@@ -12,6 +12,7 @@ jobs:
             node_version: "18.x"
 
     build:
+        needs: lint
         uses: ./.github/workflows/build.yml
         with:
             node_version: "18.x"

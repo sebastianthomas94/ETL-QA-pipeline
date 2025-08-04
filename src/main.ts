@@ -42,6 +42,12 @@ async function bootstrap() {
 }
 void bootstrap();
 
-console.log(`Environment: ${process.env.NODE_ENV}`);
 
-console.log(`Server running on: http://localhost:${process.env.PORT ?? 3000}/docs`);
+
+
+interface BootstrapConfig {
+    port?: number;
+    globalPrefix?: string;
+    enableCors?: boolean;
+    enableSwagger?: boolean;
+}
