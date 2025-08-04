@@ -7,11 +7,11 @@ on:
 
 jobs:
     lint:
-        uses: ./.github/workflows/_shared/lint-and-format.yml
+        uses: ./.github/workflows/lint-and-format.yml
         with:
             node_version: "18.x"
 
     build:
-        uses: ./.github/workflows/_shared/build.yml
+        uses: ./.github/workflows/build.yml
         with:
             node_version: "18.x"
