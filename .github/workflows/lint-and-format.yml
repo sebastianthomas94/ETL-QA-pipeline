@@ -40,9 +40,17 @@ jobs:
                   pnpm format
                   pnpm lint
 
+            - name: Check for changes
+              id: verify-changed-files
+              run: |
+                  if [ -n "$(git status --porcelain)" ]; then
+                    echo "changed=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "changed=false" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Commit changes
-              id: commit_changes
-              if: ${{ failure() }}
+              if: steps.verify-changed-files.outputs.changed == 'true'
               uses: stefanzweifel/git-auto-commit-action@v4
               with:
                   commit_message: "chore: apply formatting changes"
