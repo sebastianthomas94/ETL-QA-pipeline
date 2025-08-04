@@ -50,8 +50,20 @@ jobs:
                   fi
 
             - name: Commit changes
+              id: commit-changes
               if: steps.verify-changed-files.outputs.changed == 'true'
               uses: stefanzweifel/git-auto-commit-action@v4
               with:
                   commit_message: "chore: apply formatting changes"
                   branch: ${{ github.head_ref }}
+
+            - name: Comment on PR
+              uses: peter-evans/create-or-update-comment@v4
+              if: steps.commit-changes.outcome == 'success'
+              with:
+                  issue-number: ${{ github.event.pull_request.number }}
+                  body: |
+                      ### Lint & Format Results
+                      - **Linting and formatting completed successfully.**
+                      - **Changes have been committed to the PR branch.**
+                  reactions: "eyes"
