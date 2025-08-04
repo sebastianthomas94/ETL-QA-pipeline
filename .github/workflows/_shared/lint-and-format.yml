@@ -1,0 +1,56 @@
+name: "Lint & Format"
+
+on:
+    workflow_call:
+        inputs:
+            node_version:
+                required: true
+                type: string
+
+jobs:
+    lint-and-format:
+        name: Lint & Format
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref }}
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 10.12.4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ inputs.node_version }}
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Run ESLint
+              run: pnpm exec eslint "{src,apps,libs,test,infra}/**/*.ts" --max-warnings=0
+
+            - name: Run Prettier check
+              run: pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts" "infra/**/*.ts"
+
+            - name: Format code
+              if: ${{ failure() }}
+              run: |
+                  pnpm format
+                  pnpm lint
+
+            - name: Commit changes
+              id: commit_changes
+              if: ${{ failure() }}
+              uses: stefanzweifel/git-auto-commit-action@v4
+              with:
+                  commit_message: "chore: apply formatting changes"
+                  branch: ${{ github.head_ref }}

@@ -1,0 +1,17 @@
+name: CI Pipeline
+
+on:
+    pull_request:
+        branches: [main, dev, qa]
+        types: [opened, reopened, synchronize]
+
+jobs:
+    lint:
+        uses: ./.github/workflows/_shared/lint-and-format.yml
+        with:
+            node_version: "18.x"
+
+    build:
+        uses: ./.github/workflows/_shared/build.yml
+        with:
+            node_version: "18.x"
