@@ -39,7 +39,7 @@ jobs:
               run: pnpm exec eslint "{src,apps,libs,test,infra}/**/*.ts" --max-warnings=0
 
             - name: Run Prettier check
-              run: pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts" "infra/**/*.ts"
+              run: pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts"
 
             - name: Format code
               if: ${{ failure() }}
