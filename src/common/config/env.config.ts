@@ -97,6 +97,12 @@ export class EnvironmentVariables {
 
     @IsString()
     R2_QA_BUCKET: string;
+
+    @IsString()
+    R2_PROD_PRIVATE_BUCKET: string;
+
+    @IsString()
+    R2_QA_PRIVATE_BUCKET: string;
 }
 
 export function validate(config: Record<string, unknown>) {

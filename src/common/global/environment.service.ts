@@ -85,15 +85,19 @@ export class EnvironmentService {
     }
 
     get r2Buckets(): {
-        sourceBucket: string;
-        destinationBucket: string;
+        assetsSourceBucket: string;
+        assetsDestinationBucket: string;
+        resourceSourceBucket: string;
+        resourceDestinationBucket: string;
         accessKeyId: string;
         secretAccessKey: string;
         endpoint: string;
     } {
         return {
-            sourceBucket: this.configService.get("R2_PROD_BUCKET", { infer: true })!,
-            destinationBucket: this.configService.get("R2_QA_BUCKET", { infer: true })!,
+            assetsSourceBucket: this.configService.get("R2_PROD_BUCKET", { infer: true })!,
+            assetsDestinationBucket: this.configService.get("R2_QA_BUCKET", { infer: true })!,
+            resourceSourceBucket: this.configService.get("R2_PROD_PRIVATE_BUCKET", { infer: true })!,
+            resourceDestinationBucket: this.configService.get("R2_QA_PRIVATE_BUCKET", { infer: true })!,
             accessKeyId: this.configService.get("R2_ACCESS_KEY_ID", { infer: true })!,
             secretAccessKey: this.configService.get("R2_SECRET_ACCESS_KEY", { infer: true })!,
             endpoint: this.configService.get("R2_ENDPOINT", { infer: true })!,

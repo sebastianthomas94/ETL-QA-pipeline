@@ -28,7 +28,17 @@ export class EtlService implements OnApplicationBootstrap {
      */
     async runFullETL() {
         await this.run();
-        await this.r2CopyService.copyAllAssets();
+        // copy assets from prod to qa R2 buckets
+        await this.r2CopyService.copyAllAssets(
+            this.environmentService.r2Buckets.assetsSourceBucket,
+            this.environmentService.r2Buckets.assetsDestinationBucket,
+        );
+
+        // copy resource files from prod to qa R2 buckets
+        await this.r2CopyService.copyAllAssets(
+            this.environmentService.r2Buckets.resourceSourceBucket,
+            this.environmentService.r2Buckets.resourceDestinationBucket,
+        );
     }
 
     private readonly transformCollectionNames = this.environmentService.mongoCollectionNames.transformerCollectionNames;

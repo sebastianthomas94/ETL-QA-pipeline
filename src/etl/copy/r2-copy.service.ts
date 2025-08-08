@@ -10,8 +10,8 @@ export class R2CopyService {
         secretAccessKey: this.environmentService.r2Buckets.secretAccessKey,
         endpoint: this.environmentService.r2Buckets.endpoint,
     });
-    private readonly sourceBucket = this.environmentService.r2Buckets.sourceBucket;
-    private readonly destinationBucket = this.environmentService.r2Buckets.destinationBucket;
+    private readonly sourceBucket = this.environmentService.r2Buckets.assetsSourceBucket;
+    private readonly destinationBucket = this.environmentService.r2Buckets.assetsDestinationBucket;
     private readonly logger = new Logger(R2CopyService.name);
 
     constructor(
@@ -19,12 +19,12 @@ export class R2CopyService {
         private readonly lastRunStore: LastRunStore,
     ) {}
 
-    async copyAllAssets() {
+    async copyAllAssets(sourceBucket: string, destinationBucket: string): Promise<void> {
         let isError: boolean = false;
-        const lastRunKey = `copy-${this.sourceBucket}-to-${this.destinationBucket}`;
+        const lastRunKey = `copy-${sourceBucket}-to-${destinationBucket}`;
         const lastCopiedAt = this.lastRunStore.get(lastRunKey);
         try {
-            const keys = await listAllObjectsWithMetadata(this.s3, this.sourceBucket);
+            const keys = await listAllObjectsWithMetadata(this.s3, sourceBucket);
             this.logger.log(`Found ${keys.length} keys in prod bucket`);
 
             for (const key of keys) {
@@ -37,11 +37,11 @@ export class R2CopyService {
 
                 await copyObject({
                     s3: this.s3,
-                    sourceBucket: this.sourceBucket,
-                    destinationBucket: this.destinationBucket,
+                    sourceBucket: sourceBucket,
+                    destinationBucket: destinationBucket,
                     key: Key,
                 });
-                this.logger.log(`Copied ${Key} from ${this.sourceBucket} to ${this.destinationBucket}`);
+                this.logger.log(`Copied ${Key} from ${sourceBucket} to ${destinationBucket}`);
             }
         } catch (error) {
             this.logger.error(`Error copying assets: ${error.message}`);
@@ -49,9 +49,9 @@ export class R2CopyService {
             isError = true;
         } finally {
             if (isError) {
-                this.logger.error(`Failed to copy all assets from ${this.sourceBucket} to ${this.destinationBucket}`);
+                this.logger.error(`Failed to copy all assets from ${sourceBucket} to ${destinationBucket}`);
             } else {
-                this.logger.log(`All assets copied from ${this.sourceBucket} to ${this.destinationBucket}`);
+                this.logger.log(`All assets copied from ${sourceBucket} to ${destinationBucket}`);
             }
         }
     }
