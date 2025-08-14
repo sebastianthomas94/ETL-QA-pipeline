@@ -11,6 +11,8 @@ import { Client as PgClient } from "pg";
 import { EnvironmentService } from "@common/global/environment.service";
 import { R2CopyService } from "./copy/r2-copy.service";
 import { getAllMongoCollectionNames, getAllTableNames } from "@common/utils/db.util";
+import { getTransformCallback } from "./transforms/transform.selector";
+import { getLoadCallback } from "./loaders/mongo-load.selector";
 
 @Injectable()
 export class EtlService implements OnApplicationBootstrap {
@@ -94,14 +96,14 @@ export class EtlService implements OnApplicationBootstrap {
         let client: MongoClient | null = null;
         try {
             client = await MongoClient.connect(this.environmentService.qaMongo.uri);
-            const loader = new MongoLoader(client.db().collection(collName));
+            const loader = new MongoLoader(client.db().collection(collName), getLoadCallback(collName));
             const cursor = await this.mongoExt.streamCollection(collName, since);
 
             // Convert cursor to stream
             const cursorStream = cursor.stream();
             if (this.transformCollectionNames.includes(collName)) {
                 this.logger.log(`Applying masking transform for collection '${collName}'`);
-                await pipeline(cursorStream, new MaskTransform(), loader);
+                await pipeline(cursorStream, new MaskTransform(getTransformCallback(collName)), loader);
             } else {
                 await pipeline(cursorStream, loader);
             }

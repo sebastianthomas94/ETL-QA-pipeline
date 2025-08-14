@@ -1,51 +1,58 @@
 import { Transform, TransformCallback } from "stream";
 import { fakerEN_IN } from "@faker-js/faker";
+import { ShouldTransformCallback } from "./transform.selector";
 
 export class MaskTransform extends Transform {
-    constructor() {
+    constructor(private readonly shouldTransformCb?: ShouldTransformCallback) {
         super({ objectMode: true });
     }
 
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     _transform(obj: any, _: BufferEncoding, done: TransformCallback) {
-        if (!this.shouldTransform(obj)) {
+        if (!this.shouldTransformCb?.(obj)) {
             this.push(obj);
             console.warn(`Skipping transformation for object: ${JSON.stringify(obj)}`);
             done();
             return;
         }
 
-        // Mask sensitive data fields
-        if (obj.email) {
-            obj.email = fakerEN_IN.internet.email();
-        }
-        if (obj.name && obj.name !== "Guest") {
-            obj.name = fakerEN_IN.person.fullName();
-        }
-        if (obj.firstName) {
-            obj.firstName = fakerEN_IN.person.firstName();
-        }
-        if (obj.lastName) {
-            obj.lastName = fakerEN_IN.person.lastName();
-        }
-        if (obj.phone) {
-            obj.phone = fakerEN_IN.phone.number({ style: "international" });
-        }
-        if (obj.address) {
-            obj.address = fakerEN_IN.location.streetAddress();
-        }
+        this.maskNestedFields(obj);
 
         this.push(obj);
         done();
     }
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private shouldTransform(obj: any): boolean {
-        const shouldTransform = this.isEducator(obj);
-        return shouldTransform;
-    }
 
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    isEducator(obj: any): boolean {
-        return obj?.accountType === "User";
+    private maskNestedFields(obj: any): void {
+        if (obj === null || typeof obj !== "object") {
+            return;
+        }
+
+        if (Array.isArray(obj)) {
+            obj.forEach((item) => this.maskNestedFields(item));
+            return;
+        }
+
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                const value = obj[key];
+
+                if (key === "email" && value) {
+                    obj[key] = fakerEN_IN.internet.email();
+                } else if (key === "name" && value && value !== "Guest") {
+                    obj[key] = fakerEN_IN.person.fullName();
+                } else if (key === "firstName" && value) {
+                    obj[key] = fakerEN_IN.person.firstName();
+                } else if (key === "lastName" && value) {
+                    obj[key] = fakerEN_IN.person.lastName();
+                } else if (key === "phone" && value) {
+                    obj[key] = fakerEN_IN.phone.number({ style: "international" });
+                } else if (key === "address" && value) {
+                    obj[key] = fakerEN_IN.location.streetAddress();
+                } else if (typeof value === "object") {
+                    this.maskNestedFields(value);
+                }
+            }
+        }
     }
 }

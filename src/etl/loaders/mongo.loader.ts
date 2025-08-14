@@ -1,21 +1,25 @@
 import { Transform, TransformCallback } from "stream";
 import { Collection, AnyBulkWriteOperation } from "mongodb";
+import { GetLoadCallback } from "./mongo-load.selector";
 
 export class MongoLoader extends Transform {
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     private buffer: AnyBulkWriteOperation<any>[] = [];
 
     constructor(
-        private coll: Collection,
-        private batchSize = 500,
+        private readonly coll: Collection,
+        private readonly getLoadCb?: GetLoadCallback,
+        private readonly batchSize = 500,
     ) {
         super({ objectMode: true });
     }
 
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     async _transform(doc: any, _: BufferEncoding, done: TransformCallback) {
+        const docToLoad = this.getLoadCb ? this.getLoadCb(doc) : doc;
+
         this.buffer.push({
-            updateOne: { filter: { _id: doc._id }, update: { $set: doc }, upsert: true },
+            updateOne: { filter: { _id: doc._id }, update: { $set: docToLoad }, upsert: true },
         });
         if (this.buffer.length >= this.batchSize) {
             await this.executeBulkWrite(this.buffer);
