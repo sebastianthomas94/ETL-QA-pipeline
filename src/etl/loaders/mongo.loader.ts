@@ -1,6 +1,7 @@
 import { Transform, TransformCallback } from "stream";
 import { Collection, AnyBulkWriteOperation } from "mongodb";
-import { GetLoadCallback } from "./mongo-load.selector";
+import { GetLoadCallback } from "./mongo-load-data.selector";
+import { ShouldLoadCallback } from "./mongo-should-load.selector";
 
 export class MongoLoader extends Transform {
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -8,7 +9,10 @@ export class MongoLoader extends Transform {
 
     constructor(
         private readonly coll: Collection,
-        private readonly getLoadCb?: GetLoadCallback,
+        private readonly cbs: {
+            getLoadCb?: GetLoadCallback;
+            shouldLoadCb?: ShouldLoadCallback;
+        },
         private readonly batchSize = 500,
     ) {
         super({ objectMode: true });
@@ -16,7 +20,11 @@ export class MongoLoader extends Transform {
 
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     async _transform(doc: any, _: BufferEncoding, done: TransformCallback) {
-        const docToLoad = this.getLoadCb ? this.getLoadCb(doc) : doc;
+        if (this.cbs.shouldLoadCb && !this.cbs.shouldLoadCb(doc)) {
+            return done();
+        }
+
+        const docToLoad = this.cbs.getLoadCb ? this.cbs.getLoadCb(doc) : doc;
 
         this.buffer.push({
             updateOne: { filter: { _id: doc._id }, update: { $set: docToLoad }, upsert: true },

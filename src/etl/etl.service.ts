@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { pipeline } from "stream/promises";
 import { MongoExtractor } from "./extractors/mongo.extractor";
 import { PgExtractor } from "./extractors/pg.extractor";
@@ -12,10 +12,10 @@ import { EnvironmentService } from "@common/global/environment.service";
 import { R2CopyService } from "./copy/r2-copy.service";
 import { getAllMongoCollectionNames, getAllTableNames } from "@common/utils/db.util";
 import { getTransformCallback } from "./transforms/transform.selector";
-import { getLoadCallback } from "./loaders/mongo-load.selector";
+import { getLoadDataCallback } from "./loaders/mongo-load-data.selector";
 
 @Injectable()
-export class EtlService {
+export class EtlService implements OnApplicationBootstrap {
     private readonly logger = new Logger(EtlService.name);
 
     constructor(
@@ -41,6 +41,15 @@ export class EtlService {
             this.environmentService.r2Buckets.resourceSourceBucket,
             this.environmentService.r2Buckets.resourceDestinationBucket,
         );
+    }
+    async onApplicationBootstrap() {
+        this.logger.log("Starting initial ETL run on application bootstrap...");
+        try {
+            await this.runFullETL();
+            this.logger.log("Initial ETL run completed successfully");
+        } catch (error) {
+            this.logger.error("Initial ETL run failed:" + error);
+        }
     }
 
     private readonly transformCollectionNames = this.environmentService.mongoCollectionNames.transformerCollectionNames;
@@ -91,7 +100,11 @@ export class EtlService {
         let client: MongoClient | null = null;
         try {
             client = await MongoClient.connect(this.environmentService.qaMongo.uri);
-            const loader = new MongoLoader(client.db().collection(collName), getLoadCallback(collName));
+            const callbacks = {
+                getLoadCb: getLoadDataCallback(collName),
+                shouldLoadCb: getTransformCallback(collName),
+            };
+            const loader = new MongoLoader(client.db().collection(collName), callbacks);
             const cursor = await this.mongoExt.streamCollection(collName, since);
 
             // Convert cursor to stream
