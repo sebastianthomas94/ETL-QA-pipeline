@@ -32,10 +32,51 @@ export class PgLoader extends Transform {
         if (tableCheck.rows.length === 0) {
             console.log(`Table ${this.table} doesn't exist, creating it...`);
             await this.createTable(sampleRow);
+        } else {
+            await this.ensureColumnsExist(sampleRow);
         }
 
         this.tableExists = true;
     }
+
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private async ensureColumnsExist(sampleRow: any): Promise<void> {
+        // Get existing columns
+        const existingColumns = await this.client.query(
+            `
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = $1 AND table_schema = 'public'
+        `,
+            [this.table],
+        );
+
+        const existingColumnNames = new Set(existingColumns.rows.map((row) => row.column_name));
+
+        // Check for missing columns and add them
+        const sampleColumns = Object.keys(sampleRow);
+        const missingColumns = sampleColumns.filter((col) => !existingColumnNames.has(col));
+
+        for (const columnName of missingColumns) {
+            const value = sampleRow[columnName];
+            let type = "TEXT"; // Default type
+
+            if (typeof value === "number") {
+                type = Number.isInteger(value) ? "INTEGER" : "NUMERIC";
+            } else if (typeof value === "boolean") {
+                type = "BOOLEAN";
+            } else if (value instanceof Date) {
+                type = "TIMESTAMP";
+            } else if (typeof value === "object" && value !== null) {
+                type = "JSONB";
+            }
+
+            const alterQuery = `ALTER TABLE "${this.table}" ADD COLUMN "${columnName}" ${type}`;
+            await this.client.query(alterQuery);
+            console.log(`✅ Added column "${columnName}" (${type}) to table ${this.table}`);
+        }
+    }
+
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async createTable(sampleRow: any): Promise<void> {
         const columns = Object.keys(sampleRow).map((key) => {
@@ -102,7 +143,15 @@ export class PgLoader extends Transform {
     private async upsertBatch() {
         const primaryKey = await this.getPrimaryKey();
         const cols = Object.keys(this.buffer[0]);
-        const values = this.buffer.map((r) => cols.map((c) => r[c]));
+        const values = this.buffer.map((r) =>
+            cols.map((c) => {
+                const value = r[c];
+                if (Array.isArray(value) && value.length === 0) {
+                    return "[]";
+                }
+                return value ?? null;
+            }),
+        );
 
         let query: string;
 
