@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { pipeline } from "stream/promises";
 import { MongoExtractor } from "./extractors/mongo.extractor";
 import { PgExtractor } from "./extractors/pg.extractor";
@@ -15,7 +15,7 @@ import { getTransformCallback } from "./transforms/transform.selector";
 import { getLoadDataCallback } from "./loaders/mongo-load-data.selector";
 
 @Injectable()
-export class EtlService implements OnApplicationBootstrap {
+export class EtlService {
     private readonly logger = new Logger(EtlService.name);
 
     constructor(
@@ -41,15 +41,6 @@ export class EtlService implements OnApplicationBootstrap {
             this.environmentService.r2Buckets.resourceSourceBucket,
             this.environmentService.r2Buckets.resourceDestinationBucket,
         );
-    }
-    async onApplicationBootstrap() {
-        this.logger.log("Starting initial ETL run on application bootstrap...");
-        try {
-            await this.runFullETL();
-            this.logger.log("Initial ETL run completed successfully");
-        } catch (error) {
-            this.logger.error("Initial ETL run failed:" + error);
-        }
     }
 
     private readonly transformCollectionNames = this.environmentService.mongoCollectionNames.transformerCollectionNames;
