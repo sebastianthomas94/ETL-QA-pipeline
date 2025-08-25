@@ -13,6 +13,7 @@ import { R2CopyService } from "./copy/r2-copy.service";
 import { getAllMongoCollectionNames, getAllTableNames } from "@common/utils/db.util";
 import { getTransformCallback } from "./transforms/transform.selector";
 import { getLoadDataCallback } from "./loaders/mongo-load-data.selector";
+import { shouldLoadCallback } from "./loaders/mongo-should-load.selector";
 
 @Injectable()
 export class EtlService {
@@ -93,7 +94,7 @@ export class EtlService {
             client = await MongoClient.connect(this.environmentService.qaMongo.uri);
             const callbacks = {
                 getLoadCb: getLoadDataCallback(collName),
-                shouldLoadCb: getTransformCallback(collName),
+                shouldLoadCb: shouldLoadCallback(collName),
             };
             const loader = new MongoLoader(client.db().collection(collName), callbacks);
             const cursor = await this.mongoExt.streamCollection(collName, since);
