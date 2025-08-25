@@ -1,3 +1,5 @@
+import { UserAccountType } from "@common/enums/account-type.enum";
+
 export type ShouldTransformCallback = (obj: object) => boolean;
 
 export function getTransformCallback(collectionOrTableName: string): ShouldTransformCallback | undefined {
@@ -11,9 +13,9 @@ export function getTransformCallback(collectionOrTableName: string): ShouldTrans
 }
 
 const users = (obj: { accountType: string }) => {
-    const isUser = obj.accountType === "User";
-    const isAdmin = obj.accountType === "Admin";
-    const isRoot = obj.accountType === "Root";
+    const isUser = obj.accountType === UserAccountType.User;
+    const isAdmin = obj.accountType === UserAccountType.Admin;
+    const isRoot = obj.accountType === UserAccountType.Root;
 
     return isUser || isAdmin || isRoot;
 };
