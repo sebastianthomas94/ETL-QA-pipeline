@@ -1,6 +1,6 @@
 export type GetLoadCallback = (obj: object) => object;
 
-export function getLoadCallback(collectionOrTableName: string): GetLoadCallback | undefined {
+export function getLoadDataCallback(collectionOrTableName: string): GetLoadCallback | undefined {
     switch (collectionOrTableName) {
         case "form_admissions":
             return formAdmissions;
