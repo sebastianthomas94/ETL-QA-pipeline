@@ -11,7 +11,7 @@ import { Client as PgClient } from "pg";
 import { EnvironmentService } from "@common/global/environment.service";
 import { R2CopyService } from "./copy/r2-copy.service";
 import { getAllMongoCollectionNames, getAllTableNames } from "@common/utils/db.util";
-import { getTransformCallback } from "./transforms/transform.selector";
+import { shouldTransformCallback } from "./transforms/transform.selector";
 import { getLoadDataCallback } from "./loaders/mongo-load-data.selector";
 import { shouldLoadCallback } from "./loaders/mongo-should-load.selector";
 
@@ -103,7 +103,7 @@ export class EtlService {
             const cursorStream = cursor.stream();
             if (this.transformCollectionNames.includes(collName)) {
                 this.logger.log(`Applying masking transform for collection '${collName}'`);
-                await pipeline(cursorStream, new MaskTransform(getTransformCallback(collName)), loader);
+                await pipeline(cursorStream, new MaskTransform(shouldTransformCallback(collName)), loader);
             } else {
                 await pipeline(cursorStream, loader);
             }

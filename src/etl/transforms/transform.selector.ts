@@ -1,8 +1,9 @@
+import { SELECTED_ACCOUNTS } from "@common/constant/select-accounts.common";
 import { UserAccountType } from "@common/enums/account-type.enum";
 
 export type ShouldTransformCallback = (obj: object) => boolean;
 
-export function getTransformCallback(collectionOrTableName: string): ShouldTransformCallback | undefined {
+export function shouldTransformCallback(collectionOrTableName: string): ShouldTransformCallback | undefined {
     switch (collectionOrTableName) {
         case "users":
             return users;
@@ -12,10 +13,12 @@ export function getTransformCallback(collectionOrTableName: string): ShouldTrans
     }
 }
 
-const users = (obj: { accountType: string }) => {
+const users = (obj: { accountType: string; _id: string }) => {
     const isUser = obj.accountType === UserAccountType.User;
     const isAdmin = obj.accountType === UserAccountType.Admin;
     const isRoot = obj.accountType === UserAccountType.Root;
+    const isAllowedAccountType = isUser || isAdmin || isRoot;
+    const isNotSelectedAccount = !SELECTED_ACCOUNTS.includes(obj._id);
 
-    return isUser || isAdmin || isRoot;
+    return isAllowedAccountType && isNotSelectedAccount;
 };
