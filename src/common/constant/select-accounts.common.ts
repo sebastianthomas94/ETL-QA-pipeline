@@ -1,1 +1,3 @@
-export const SELECTED_ACCOUNTS = ["DfWJng"];
+export const SELECTED_ACCOUNTS = [
+    "DfWJng", // QA user Jancy
+];
