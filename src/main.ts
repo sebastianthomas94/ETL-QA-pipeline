@@ -4,7 +4,7 @@ import { SwaggerModule } from "@nestjs/swagger";
 import { swaggerConfig } from "./common/config/swagger.config";
 import { EnvironmentService } from "./common/global/environment.service";
 import { corsConfig } from "./common/config/cors.config";
-import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { ValidationPipe } from "@nestjs/common";
 import { AllExceptionsFilter } from "@common/filter/all-exceptions.filter";
 import helmet from "helmet";
 import { Logger } from "nestjs-pino";
@@ -27,11 +27,6 @@ async function bootstrap() {
             forbidUnknownValues: true,
         }),
     );
-
-    app.enableVersioning({
-        type: VersioningType.URI,
-        defaultVersion: "1",
-    });
 
     const logger = app.get<Logger>(Logger);
     app.useLogger(logger);

@@ -7,10 +7,11 @@ import { LastRunStore } from "../common/last-run.store";
 import { EnvironmentService } from "@common/global/environment.service";
 import { EtlCron } from "src/jobs/etl.cron";
 import { ScheduleModule } from "@nestjs/schedule";
+import { EtlController } from "./etl.controller";
 
 @Module({
     imports: [ScheduleModule.forRoot()],
-    controllers: [],
+    controllers: [EtlController],
     providers: [
         EtlService,
         {
