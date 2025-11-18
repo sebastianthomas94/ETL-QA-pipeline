@@ -23,7 +23,10 @@ export class PgExtractor {
 
         if (columnCheck.rows.length > 0) {
             // Table has updated_at column
-            sql = `SELECT * FROM ${table} WHERE updated_at >= $1 ORDER BY updated_at`;
+            sql = `
+            SELECT * FROM ${table} 
+            WHERE updated_at >= $1 OR updated_at IS NULL
+            ORDER BY updated_at`;
             params = [since];
         } else {
             // Table doesn't have updated_at, get all records
