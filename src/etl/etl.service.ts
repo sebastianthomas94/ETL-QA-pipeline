@@ -72,11 +72,11 @@ export class EtlService {
 
             for (const collName of mongoCollectionNames) {
                 await this.syncMongo(collName);
-                this.lastRun.set(`mongo-${collName}`, now);
+                await this.lastRun.set(`mongo-${collName}`, now);
             }
             for (const tableName of pgTableNames) {
                 await this.syncPg(tableName);
-                this.lastRun.set(`pg-${tableName}`, now);
+                await this.lastRun.set(`pg-${tableName}`, now);
             }
             this.logger.log("ETL pipeline completed successfully");
         } catch (error) {

@@ -23,6 +23,8 @@ export class R2CopyService {
         let isError: boolean = false;
         const lastRunKey = `copy-${sourceBucket}-to-${destinationBucket}`;
         const lastCopiedAt = this.lastRunStore.get(lastRunKey);
+        const copyStartTime = new Date();
+
         try {
             const keys = await listAllObjectsWithMetadata(this.s3, sourceBucket);
             this.logger.log(`Found ${keys.length} keys in prod bucket`);
@@ -43,6 +45,10 @@ export class R2CopyService {
                 });
                 this.logger.log(`Copied ${Key} from ${sourceBucket} to ${destinationBucket}`);
             }
+
+            // Persist the timestamp after successful copy
+            await this.lastRunStore.set(lastRunKey, copyStartTime);
+            this.logger.log(`Updated last run timestamp for '${lastRunKey}'`);
         } catch (error) {
             this.logger.error(`Error copying assets: ${error.message}`);
 
