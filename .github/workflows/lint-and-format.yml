@@ -1,0 +1,69 @@
+name: "Lint & Format"
+
+on:
+    workflow_call:
+        inputs:
+            node_version:
+                required: true
+                type: string
+
+jobs:
+    lint-and-format:
+        name: Lint & Format
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref }}
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 10.12.4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ inputs.node_version }}
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Format and lint code
+              run: |
+                  pnpm format
+                  pnpm lint
+
+            - name: Check for changes
+              id: verify-changed-files
+              run: |
+                  if [ -n "$(git status --porcelain)" ]; then
+                    echo "changed=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "changed=false" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Commit changes
+              id: commit-changes
+              if: steps.verify-changed-files.outputs.changed == 'true'
+              uses: stefanzweifel/git-auto-commit-action@v4
+              with:
+                  commit_message: "chore: apply formatting changes"
+                  branch: ${{ github.head_ref }}
+
+            - name: Comment on PR
+              uses: peter-evans/create-or-update-comment@v4
+              if: steps.commit-changes.outcome == 'success'
+              with:
+                  issue-number: ${{ github.event.pull_request.number }}
+                  body: |
+                      ### Lint & Format Results
+                      - **Linting and formatting completed successfully.**
+                      - **Changes have been committed to the PR branch.**
+                  reactions: "eyes"
